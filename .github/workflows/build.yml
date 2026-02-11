@@ -1,0 +1,183 @@
+name: Build & Validate iOS App
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ReadListenApp
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+    # ── Checkout ──
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # ── Environment ──
+    - name: List available Xcode versions
+      run: ls /Applications | grep Xcode
+
+    - name: Select latest Xcode
+      run: |
+        # Pick the latest available Xcode
+        XCODE_PATH=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+        if [ -z "$XCODE_PATH" ]; then
+          echo "❌ No Xcode found"
+          exit 1
+        fi
+        echo "Using: $XCODE_PATH"
+        sudo xcode-select --switch "$XCODE_PATH/Contents/Developer"
+
+    - name: Show Xcode & Swift versions
+      run: |
+        xcodebuild -version
+        swift --version
+        echo "Available SDKs:"
+        xcodebuild -showsdks | grep -i ios
+
+    # ── Generate Xcode Project ──
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode project
+      run: xcodegen generate
+
+    - name: Verify project was created
+      run: |
+        if [ -d "ReadListenApp.xcodeproj" ]; then
+          echo "✅ Xcode project generated successfully"
+          echo "Schemes:"
+          xcodebuild -project ReadListenApp.xcodeproj -list
+        else
+          echo "❌ Project generation failed"
+          exit 1
+        fi
+
+    # ── Find a valid destination ──
+    - name: Find iOS Simulator
+      id: simulator
+      run: |
+        echo "Available simulators:"
+        xcrun simctl list devices available | head -30
+
+        # Try to find an iPhone simulator
+        DEST=$(xcrun simctl list devices available -j | \
+          python3 -c "
+        import json, sys
+        data = json.load(sys.stdin)
+        for runtime, devices in data.get('devices', {}).items():
+            if 'iOS' in runtime:
+                for d in devices:
+                    if d.get('isAvailable') and 'iPhone' in d.get('name',''):
+                        print(f\"platform=iOS Simulator,id={d['udid']}\")
+                        sys.exit(0)
+        # Fallback: any available device
+        for runtime, devices in data.get('devices', {}).items():
+            if 'iOS' in runtime:
+                for d in devices:
+                    if d.get('isAvailable'):
+                        print(f\"platform=iOS Simulator,id={d['udid']}\")
+                        sys.exit(0)
+        print('generic/platform=iOS Simulator')
+        ")
+        echo "destination=$DEST" >> $GITHUB_OUTPUT
+        echo "Using destination: $DEST"
+
+    # ── Build ──
+    - name: Build for iOS Simulator
+      run: |
+        set -o pipefail
+        xcodebuild \
+          -project ReadListenApp.xcodeproj \
+          -scheme ReadListenApp \
+          -destination '${{ steps.simulator.outputs.destination }}' \
+          -configuration Debug \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
+          build 2>&1 | tee build.log
+
+    # ── Results ──
+    - name: Build Summary
+      if: always()
+      run: |
+        if grep -q "BUILD SUCCEEDED" build.log 2>/dev/null; then
+          echo "## ✅ BUILD SUCCEEDED" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "ReadListenApp compiled successfully for iOS Simulator." >> $GITHUB_STEP_SUMMARY
+
+          # Count warnings
+          WARNINGS=$(grep -c "warning:" build.log 2>/dev/null || echo "0")
+          echo "**Warnings:** $WARNINGS" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ❌ BUILD FAILED" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Errors:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep "error:" build.log 2>/dev/null | head -30 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Upload build log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-log
+        path: build.log
+        retention-days: 7
+
+  # ── Swift syntax check (fast, runs in parallel) ──
+  lint:
+    name: Swift Syntax Check
+    runs-on: macos-15
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Select latest Xcode
+      run: |
+        XCODE_PATH=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+        sudo xcode-select --switch "$XCODE_PATH/Contents/Developer"
+
+    - name: Syntax check all Swift files
+      run: |
+        echo "## Swift Syntax Validation" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        ERRORS=0
+        FILES=0
+
+        for f in $(find . -name "*.swift" -not -path "./.build/*"); do
+          FILES=$((FILES + 1))
+          # Use swiftc -typecheck with iOS SDK
+          SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
+          if xcrun swiftc -typecheck -sdk "$SDK" -target arm64-apple-ios26.0-simulator "$f" 2>/dev/null; then
+            echo "✅ $f"
+          else
+            echo "⚠️  $f (may need full project context)"
+            ERRORS=$((ERRORS + 1))
+          fi
+        done
+
+        echo "**Files checked:** $FILES" >> $GITHUB_STEP_SUMMARY
+        echo "**Issues:** $ERRORS (note: cross-file references may flag false positives)" >> $GITHUB_STEP_SUMMARY
+
+    - name: Count lines of code
+      run: |
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Code Stats" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        find . -name "*.swift" -not -path "./.build/*" | xargs wc -l | tail -1 | awk '{print "Total Swift lines: " $1}'
+        find . -name "*.swift" -not -path "./.build/*" | wc -l | awk '{print "Swift files: " $1}'
+        echo '```' >> $GITHUB_STEP_SUMMARY

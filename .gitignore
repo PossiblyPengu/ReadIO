@@ -1,0 +1,41 @@
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+.DS_Store
+
+# XcodeGen regenerates this — keep project.yml as source of truth
+ReadListenApp.xcodeproj/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled
+*.o
+*.a
+*.so
+
+# OS
+.DS_Store
+Thumbs.db
+
+# User-specific
+*.playground
+
+# Build artifacts
+build/
+*.ipa
+*.dSYM
+*.dSYM.zip
