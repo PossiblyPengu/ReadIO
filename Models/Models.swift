@@ -269,12 +269,16 @@ struct AudiobookInfo: Codable, Hashable {
     }
 }
 
-struct AudioChapterMapping: Codable, Hashable {
+struct AudioChapterMapping: Identifiable, Codable, Hashable {
+    var id: Int { chapterIndex }
     var chapterIndex: Int
     var chapterTitle: String
     var startTime: TimeInterval
     var endTime: TimeInterval
     var correspondingReadingPosition: String?
+
+    var title: String { chapterTitle }
+    var duration: TimeInterval { endTime - startTime }
 }
 
 // MARK: - Reading Theme

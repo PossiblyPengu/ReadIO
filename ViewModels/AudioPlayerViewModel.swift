@@ -15,6 +15,9 @@ class AudioPlayerViewModel: ObservableObject {
     @Published var chapters: [AudioChapterMapping] = []
     @Published var currentChapterTitle: String = ""
     @Published var error: String?
+    @Published var currentBook: Book?
+
+    var sleepTimerActive: Bool { sleepTimerRemaining != nil }
 
     private var audioPlayer: AVAudioPlayer?
     private var audioFiles: [String] = []
@@ -29,6 +32,7 @@ class AudioPlayerViewModel: ObservableObject {
             return
         }
 
+        currentBook = book
         audioFiles = audioInfo.audioFilePaths
         currentBookId = book.id
         currentTrackIndex = audioInfo.currentTrack
@@ -155,6 +159,18 @@ class AudioPlayerViewModel: ObservableObject {
 
     func jumpToChapter(_ chapter: AudioChapterMapping) {
         seek(to: chapter.startTime)
+    }
+
+    func nextChapter() {
+        nextTrack()
+    }
+
+    func previousChapter() {
+        previousTrack()
+    }
+
+    func setSleepTimer(minutes: TimeInterval) {
+        startSleepTimer(minutes: max(1, Int(minutes)))
     }
 
     // MARK: - Sleep Timer
