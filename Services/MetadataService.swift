@@ -294,28 +294,28 @@ actor MetadataService {
             var options: [CoverOption] = []
 
             // Fetch edition details concurrently
-            let editions = await withTaskGroup(of: (String, [String: Any]?).self) { group in
+            let editions = await withTaskGroup(of: (String, Data?).self) { group in
                 for key in keysToCheck {
                     group.addTask {
                         let edURL = URL(string: "https://openlibrary.org/books/\(key).json")!
                         guard let (d, r) = try? await self.session.data(from: edURL),
-                              let hr = r as? HTTPURLResponse, hr.statusCode == 200,
-                              let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else {
+                              let hr = r as? HTTPURLResponse, hr.statusCode == 200 else {
                             return (key, nil)
                         }
-                        return (key, j)
+                        return (key, d)
                     }
                 }
-                var result: [(String, [String: Any])] = []
-                for await (key, json) in group {
-                    if let json = json { result.append((key, json)) }
+                var result: [(String, Data)] = []
+                for await (key, data) in group {
+                    if let data = data { result.append((key, data)) }
                 }
                 return result
             }
 
             var seenCovers = Set<Int>()
 
-            for (key, edData) in editions {
+            for (key, edRawData) in editions {
+                guard let edData = try? JSONSerialization.jsonObject(with: edRawData) as? [String: Any] else { continue }
                 // Get cover IDs from this edition
                 guard let covers = edData["covers"] as? [Int],
                       let coverId = covers.first,
