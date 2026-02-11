@@ -69,7 +69,7 @@ struct ConcentricRadius {
 // In iOS 26, the tab bar shrinks automatically on scroll,
 // but custom floating controls need manual tracking.
 struct ScrollOffsetKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
+    nonisolated(unsafe) static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
     }
@@ -137,16 +137,5 @@ extension View {
 }
 
 // MARK: - BookFormat Icon Helper
-extension BookFormat {
-    var iconName: String {
-        switch self {
-        case .epub: return "book"
-        case .pdf: return "doc.text"
-        case .mobi: return "iphone"
-        }
-    }
-
-    var displayName: String {
-        rawValue.uppercased()
-    }
-}
+// NOTE: iconName and displayName are defined in Models/Models.swift
+// Do not redeclare them here.

@@ -1,6 +1,6 @@
 import Foundation
 
-class StorageService {
+class StorageService: @unchecked Sendable {
     static let shared = StorageService()
     private init() {}
 
