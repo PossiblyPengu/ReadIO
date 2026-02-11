@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 
+@MainActor
 class LibraryViewModel: ObservableObject {
     @Published var books: [Book] = []
     @Published var searchText: String = ""
@@ -176,7 +177,6 @@ class LibraryViewModel: ObservableObject {
 
     /// Fetch metadata from embedded file data + Google Books + Open Library,
     /// then merge into the existing book record.
-    @MainActor
     func enrichMetadata(for bookId: UUID, fileURL: URL, format: BookFormat) async {
         guard let index = books.firstIndex(where: { $0.id == bookId }) else { return }
 
@@ -234,7 +234,6 @@ class LibraryViewModel: ObservableObject {
 
     /// Select a specific cover from the available options.
     /// Downloads the full-res image and saves it as the book's cover.
-    @MainActor
     func selectCover(for bookId: UUID, option: CoverOptionInfo) async {
         guard let idx = books.firstIndex(where: { $0.id == bookId }),
               let url = URL(string: option.fullURL) else { return }
@@ -249,7 +248,6 @@ class LibraryViewModel: ObservableObject {
     }
 
     /// Remove the cover image for a book (revert to gradient placeholder).
-    @MainActor
     func removeCover(for bookId: UUID) {
         guard let idx = books.firstIndex(where: { $0.id == bookId }) else { return }
         books[idx].coverImagePath = nil
