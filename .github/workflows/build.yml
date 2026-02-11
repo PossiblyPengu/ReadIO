@@ -71,10 +71,24 @@ jobs:
           -scheme ReadIO \
           -destination 'generic/platform=iOS Simulator' \
           -configuration Debug \
+          -derivedDataPath ./build \
           CODE_SIGN_IDENTITY="" \
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
           build 2>&1 | tee build.log
+
+    - name: Locate built app
+      if: success()
+      run: |
+        echo "Finding .app bundle..."
+        find ./build -name "ReadIO.app" -type d
+        APP_PATH=$(find ./build -name "ReadIO.app" -type d | head -1)
+        echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+        
+        if [ -n "$APP_PATH" ]; then
+          echo "✅ Found app at: $APP_PATH"
+          ls -lh "$APP_PATH"
+        fi
 
     # ── Results ──
     - name: Build Summary
@@ -104,6 +118,14 @@ jobs:
         name: build-log
         path: build.log
         retention-days: 7
+
+    - name: Upload app bundle
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ReadIO-simulator-app
+        path: ${{ env.APP_PATH }}
+        retention-days: 30
 
   # ── Swift syntax check (fast, runs in parallel) ──
   lint:
