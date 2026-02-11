@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build ReadListenApp
+    name: Build ReadIO
     runs-on: macos-15
     timeout-minutes: 30
 
@@ -53,10 +53,10 @@ jobs:
 
     - name: Verify project was created
       run: |
-        if [ -d "ReadListenApp.xcodeproj" ]; then
+        if [ -d "ReadIO.xcodeproj" ]; then
           echo "✅ Xcode project generated successfully"
           echo "Schemes:"
-          xcodebuild -project ReadListenApp.xcodeproj -list
+          xcodebuild -project ReadIO.xcodeproj -list
         else
           echo "❌ Project generation failed"
           exit 1
@@ -97,8 +97,8 @@ jobs:
       run: |
         set -o pipefail
         xcodebuild \
-          -project ReadListenApp.xcodeproj \
-          -scheme ReadListenApp \
+          -project ReadIO.xcodeproj \
+          -scheme ReadIO \
           -destination '${{ steps.simulator.outputs.destination }}' \
           -configuration Debug \
           CODE_SIGN_IDENTITY="" \
@@ -113,7 +113,7 @@ jobs:
         if grep -q "BUILD SUCCEEDED" build.log 2>/dev/null; then
           echo "## ✅ BUILD SUCCEEDED" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "ReadListenApp compiled successfully for iOS Simulator." >> $GITHUB_STEP_SUMMARY
+          echo "ReadIO compiled successfully for iOS Simulator." >> $GITHUB_STEP_SUMMARY
 
           # Count warnings
           WARNINGS=$(grep -c "warning:" build.log 2>/dev/null || echo "0")

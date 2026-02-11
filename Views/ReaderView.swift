@@ -233,7 +233,7 @@ struct ReaderView: View {
 
     private var sampleContent: String {
         """
-        Welcome to ReadListen — your reading and listening companion.
+        Welcome to ReadIO — your reading and listening companion.
 
         Your book "\(book.title)" by \(book.author) will be rendered here with your preferred font, size, and theme settings.
 

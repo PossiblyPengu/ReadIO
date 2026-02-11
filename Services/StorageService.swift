@@ -4,9 +4,9 @@ class StorageService {
     static let shared = StorageService()
     private init() {}
 
-    private let booksKey = "readlisten_books"
-    private let settingsKey = "readlisten_settings"
-    private let customThemesKey = "readlisten_custom_themes"
+    private let booksKey = "readio_books"
+    private let settingsKey = "readio_settings"
+    private let customThemesKey = "readio_custom_themes"
     private let fileManager = FileManager.default
 
     // MARK: - Directory Setup

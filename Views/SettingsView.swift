@@ -309,7 +309,7 @@ struct SettingsView: View {
             GlassSeparator(isDark: isDark)
 
             SettingsNavRow(icon: "book.closed.fill", iconColor: .indigo,
-                           title: "About ReadListen", isDark: isDark) {
+                           title: "About ReadIO", isDark: isDark) {
                 AboutView()
             }
 
@@ -586,7 +586,7 @@ struct AboutView: View {
                     .foregroundStyle(.indigo)
                     .padding(.top, 40)
 
-                Text("ReadListen").font(.largeTitle.weight(.bold))
+                Text("ReadIO").font(.largeTitle.weight(.bold))
                 Text("Your reading and listening companion")
                     .font(.subheadline).foregroundStyle(.secondary)
 

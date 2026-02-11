@@ -1,4 +1,4 @@
-# ReadListen — iOS 26 Liquid Glass Edition
+# ReadIO — iOS 26 Liquid Glass Edition
 
 A reading and audiobook companion app built with Apple's Liquid Glass design language.
 
@@ -52,8 +52,8 @@ On import, books are enriched automatically from three sources:
 ## Project Structure
 
 ```
-ReadListenApp_v2/
-├── ReadListenApp.swift
+ReadIO/
+├── ReadIOApp.swift
 ├── Extensions/
 │   └── LiquidGlassHelpers.swift
 ├── Models/

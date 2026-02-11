@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct ReadListenApp: App {
+struct ReadIOApp: App {
     @StateObject private var libraryVM = LibraryViewModel()
     @StateObject private var settingsVM = SettingsViewModel()
     @StateObject private var audioPlayerVM = AudioPlayerViewModel()

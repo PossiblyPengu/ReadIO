@@ -6,7 +6,7 @@ DerivedData/
 .DS_Store
 
 # XcodeGen regenerates this — keep project.yml as source of truth
-ReadListenApp.xcodeproj/
+ReadIO.xcodeproj/
 
 # Swift Package Manager
 .build/
