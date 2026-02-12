@@ -5,9 +5,6 @@
 DerivedData/
 .DS_Store
 
-# XcodeGen regenerates this — keep project.yml as source of truth
-ReadIO.xcodeproj/
-
 # Swift Package Manager
 .build/
 .swiftpm/
